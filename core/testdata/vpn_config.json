@@ -1,0 +1,25 @@
+{
+  "log": {"loglevel": "warning"},
+  "dns": {"servers": ["1.1.1.1", "8.8.8.8"], "queryStrategy": "UseIPv4"},
+  "inbounds": [{
+    "tag": "tun", "port": 0, "protocol": "tun",
+    "settings": {"name": "tulpor0", "MTU": 1500},
+    "sniffing": {"enabled": true, "destOverride": ["http", "tls", "quic"], "routeOnly": true}
+  }],
+  "outbounds": [
+    {"tag": "proxy", "protocol": "vless",
+     "settings": {"vnext": [{"address": "203.0.113.10", "port": 443,
+       "users": [{"id": "b831381d-6324-4d53-ad4f-8cda48b30811", "encryption": "none", "flow": "xtls-rprx-vision"}]}]},
+     "streamSettings": {"network": "tcp", "security": "reality",
+       "realitySettings": {"serverName": "www.microsoft.com", "fingerprint": "chrome",
+         "publicKey": "Z84J2IelR9ch3k8VtlVhhs5ycBUlXA7wHBWcBrjqnAw", "shortId": "6ba85179e30d4fc2", "spiderX": "/"}}},
+    {"tag": "direct", "protocol": "freedom", "settings": {"domainStrategy": "UseIPv4"}},
+    {"tag": "block", "protocol": "blackhole"},
+    {"tag": "dns-out", "protocol": "dns"}
+  ],
+  "routing": {"domainStrategy": "AsIs", "rules": [
+    {"type": "field", "inboundTag": ["tun"], "port": "53", "outboundTag": "dns-out"},
+    {"type": "field", "ip": ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8", "169.254.0.0/16", "fc00::/7", "fe80::/10"], "outboundTag": "direct"},
+    {"type": "field", "domain": ["domain:uz"], "outboundTag": "direct"}
+  ]}
+}
