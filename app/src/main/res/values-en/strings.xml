@@ -32,7 +32,7 @@
     <string name="ms">%d ms</string>
     <string name="unreachable">No response</string>
     <string name="add_server">Add server</string>
-    <string name="add_server_hint">Paste vless:// link(s)</string>
+    <string name="add_server_hint">vless:// link(s)</string>
     <string name="paste_clipboard">Paste from clipboard</string>
     <string name="subscription_url">Subscription URL (optional)</string>
     <string name="add">Add</string>
@@ -72,8 +72,8 @@
     <string name="split_tunneling">App selection</string>
     <string name="split_tunneling_sub">Which apps use the VPN</string>
     <string name="split_all">All</string>
-    <string name="split_only">Only selected</string>
-    <string name="split_except">All except selected</string>
+    <string name="split_only">Selected</string>
+    <string name="split_except">Excluded</string>
     <string name="split_n_apps">%d apps</string>
     <string name="protocol">Protocol</string>
     <string name="language">Language</string>
@@ -86,4 +86,7 @@
     <string name="subscription_refresh">Refresh subscription</string>
     <string name="connect_failed_hint">Check that the server is running and the link is correct</string>
     <string name="notification_permission">Allow notifications to see VPN status</string>
+    <string name="split_all_hint">All apps use the VPN</string>
+    <string name="split_only_hint">Only checked apps use the VPN</string>
+    <string name="split_except_hint">Checked apps bypass the VPN, others use it</string>
 </resources>

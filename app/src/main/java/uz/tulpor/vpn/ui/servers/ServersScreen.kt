@@ -1,15 +1,21 @@
 package uz.tulpor.vpn.ui.servers
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +30,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -54,6 +60,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import uz.tulpor.vpn.R
@@ -64,6 +71,9 @@ import uz.tulpor.vpn.ui.components.AutoBadge
 import uz.tulpor.vpn.ui.components.Flag
 import uz.tulpor.vpn.ui.components.GoldBrush
 import uz.tulpor.vpn.ui.components.PingBars
+import uz.tulpor.vpn.ui.components.SegmentedControl
+import uz.tulpor.vpn.ui.components.appear
+import uz.tulpor.vpn.ui.components.bouncyClickable
 import uz.tulpor.vpn.ui.components.glass
 import uz.tulpor.vpn.ui.theme.TulporColors
 
@@ -106,7 +116,8 @@ fun ServersScreen(
             Modifier.fillMaxWidth().padding(start = 20.dp, end = 14.dp, top = 16.dp, bottom = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(stringResource(R.string.servers_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.servers_title), style = MaterialTheme.typography.titleLarge, maxLines = 1,
+                overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
             val inf = rememberInfiniteTransition(label = "spin")
             val angle by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Restart), label = "a")
             RoundIcon(onClick = onPingAll) {
@@ -140,12 +151,12 @@ fun ServersScreen(
             }
         }
 
-        // Tabs
-        Row(Modifier.padding(horizontal = 20.dp, vertical = 14.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Chip(stringResource(R.string.tab_all), tab == Tab.ALL) { tab = Tab.ALL }
-            Chip(stringResource(R.string.tab_free), tab == Tab.FREE) { tab = Tab.FREE }
-            Chip(stringResource(R.string.tab_premium), tab == Tab.PREMIUM) { tab = Tab.PREMIUM }
-        }
+        SegmentedControl(
+            options = listOf(stringResource(R.string.tab_all), stringResource(R.string.tab_free), stringResource(R.string.tab_premium)),
+            selected = tab.ordinal,
+            onSelect = { tab = Tab.entries[it] },
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+        )
 
         if (servers.isEmpty()) {
             EmptyState(onAdd)
@@ -159,9 +170,11 @@ fun ServersScreen(
             if (tab != Tab.PREMIUM) item("auto") {
                 Row(
                     Modifier
+                        .animateItem()
+                        .appear(0)
                         .fillMaxWidth()
+                        .bouncyClickable { onSelect(AppSettings.AUTO_SERVER) }
                         .glass(RoundedCornerShape(16.dp), selected = selectedId == AppSettings.AUTO_SERVER)
-                        .clickable { onSelect(AppSettings.AUTO_SERVER) }
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -171,12 +184,15 @@ fun ServersScreen(
                         Text(stringResource(R.string.fastest_server), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                         Text(stringResource(R.string.auto), color = TulporColors.Text3, fontSize = 12.sp)
                     }
-                    if (selectedId == AppSettings.AUTO_SERVER) Icon(Icons.Rounded.Check, null, tint = TulporColors.Gold)
+                    SelectedCheck(selectedId == AppSettings.AUTO_SERVER)
                 }
             }
-            section(R.string.section_my, mine, selectedId, pings, isPremium, onSelect, onPremium) { toDelete = it }
-            section(R.string.section_free, free, selectedId, pings, isPremium, onSelect, onPremium, null)
-            section(R.string.section_premium, premium, selectedId, pings, isPremium, onSelect, onPremium, null)
+            var idx = 1
+            section(R.string.section_my, mine, idx, selectedId, pings, isPremium, onSelect, onPremium) { toDelete = it }
+            idx += mine.size + 1
+            section(R.string.section_free, free, idx, selectedId, pings, isPremium, onSelect, onPremium, null)
+            idx += free.size + 1
+            section(R.string.section_premium, premium, idx, selectedId, pings, isPremium, onSelect, onPremium, null)
         }
     }
 
@@ -199,6 +215,7 @@ fun ServersScreen(
 private fun androidx.compose.foundation.lazy.LazyListScope.section(
     title: Int,
     list: List<Server>,
+    startIndex: Int,
     selectedId: String,
     pings: Map<String, Long>,
     isPremium: Boolean,
@@ -210,11 +227,13 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     item("h$title") {
         Text(
             stringResource(title).uppercase(), style = MaterialTheme.typography.labelMedium,
-            color = TulporColors.Text3, modifier = Modifier.padding(start = 4.dp, top = 10.dp, bottom = 2.dp),
+            color = TulporColors.Text3, maxLines = 1,
+            modifier = Modifier.animateItem().appear(startIndex).padding(start = 4.dp, top = 10.dp, bottom = 2.dp),
         )
     }
-    items(list, key = { it.id }) { s ->
+    itemsIndexed(list, key = { _, it -> it.id }) { i, s ->
         ServerRow(
+            Modifier.animateItem().appear(startIndex + 1 + i),
             s, selectedId == s.id, pings[s.id], locked = s.premium && !isPremium,
             onClick = { if (s.premium && !isPremium) onPremium() else onSelect(s.id) },
             onLongClick = onLongPress?.let { { it(s) } },
@@ -222,14 +241,21 @@ private fun androidx.compose.foundation.lazy.LazyListScope.section(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ServerRow(s: Server, selected: Boolean, ping: Long?, locked: Boolean, onClick: () -> Unit, onLongClick: (() -> Unit)?) {
+private fun ServerRow(
+    modifier: Modifier,
+    s: Server,
+    selected: Boolean,
+    ping: Long?,
+    locked: Boolean,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)?,
+) {
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
+            .bouncyClickable(onLongClick = onLongClick, onClick = onClick)
             .glass(RoundedCornerShape(16.dp), selected = selected)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -237,42 +263,43 @@ private fun ServerRow(s: Server, selected: Boolean, ping: Long?, locked: Boolean
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             val title = if (s.country.isNotBlank()) Countries.displayName(s.country) else s.name
-            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1)
+            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val sub = s.city.ifBlank { if (title != s.name) s.name else s.address }
-            Text(sub, color = TulporColors.Text3, fontSize = 12.sp, maxLines = 1)
+            Text(sub, color = TulporColors.Text3, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Text(
-            when {
-                ping == null -> "—"
-                ping < 0 -> stringResource(R.string.unreachable)
-                else -> stringResource(R.string.ms, ping)
-            },
-            color = if (ping != null && ping < 0) TulporColors.Red.copy(alpha = .8f) else TulporColors.Text2,
-            fontSize = 12.sp,
-        )
+        AnimatedContent(ping, transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(150)) }, label = "ping") { p ->
+            Text(
+                when {
+                    p == null -> "—"
+                    p < 0 -> stringResource(R.string.unreachable)
+                    else -> stringResource(R.string.ms, p)
+                },
+                color = if (p != null && p < 0) TulporColors.Red.copy(alpha = .8f) else TulporColors.Text2,
+                fontSize = 12.sp, maxLines = 1,
+            )
+        }
         Spacer(Modifier.width(8.dp))
-        when {
-            locked -> Icon(Icons.Rounded.WorkspacePremium, null, tint = TulporColors.Gold, modifier = Modifier.size(18.dp))
-            selected -> Icon(Icons.Rounded.Check, null, tint = TulporColors.Gold, modifier = Modifier.size(20.dp))
-            else -> PingBars(ping)
+        Box(contentAlignment = Alignment.Center) {
+            when {
+                locked -> Icon(Icons.Rounded.WorkspacePremium, null, tint = TulporColors.Gold, modifier = Modifier.size(18.dp))
+                else -> {
+                    androidx.compose.animation.AnimatedVisibility(!selected, enter = fadeIn(), exit = fadeOut()) { PingBars(ping) }
+                    SelectedCheck(selected)
+                }
+            }
         }
     }
 }
 
+/** Gold check that pops in with a spring when an item becomes selected. */
 @Composable
-private fun Chip(text: String, selected: Boolean, onClick: () -> Unit) {
-    val shape = CircleShape
-    Box(
-        Modifier
-            .then(if (selected) Modifier.clip(shape).background(TulporColors.Gold) else Modifier.glass(shape))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 8.dp)
+private fun SelectedCheck(visible: Boolean) {
+    androidx.compose.animation.AnimatedVisibility(
+        visible,
+        enter = scaleIn(spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMedium)) + fadeIn(),
+        exit = scaleOut(tween(150)) + fadeOut(tween(150)),
     ) {
-        Text(
-            text, fontSize = 13.sp,
-            color = if (selected) TulporColors.OnGold else TulporColors.Text2,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-        )
+        Icon(Icons.Rounded.Check, null, tint = TulporColors.Gold, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -281,8 +308,8 @@ private fun RoundIcon(gold: Boolean = false, onClick: () -> Unit, content: @Comp
     Box(
         Modifier
             .size(42.dp)
-            .then(if (gold) Modifier.clip(CircleShape).background(GoldBrush) else Modifier.glass(CircleShape))
-            .clickable(onClick = onClick),
+            .bouncyClickable(pressedScale = 0.9f, onClick = onClick)
+            .then(if (gold) Modifier.clip(CircleShape).background(GoldBrush) else Modifier.glass(CircleShape)),
         contentAlignment = Alignment.Center,
     ) { content() }
 }
@@ -290,10 +317,10 @@ private fun RoundIcon(gold: Boolean = false, onClick: () -> Unit, content: @Comp
 @Composable
 private fun EmptyState(onAdd: () -> Unit) {
     Column(
-        Modifier.fillMaxWidth().padding(20.dp).glass(RoundedCornerShape(22.dp)).padding(24.dp),
+        Modifier.fillMaxWidth().padding(20.dp).appear(0).glass(RoundedCornerShape(22.dp)).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(stringResource(R.string.empty_servers_title), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.empty_servers_title), style = MaterialTheme.typography.titleMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Spacer(Modifier.height(8.dp))
         Text(stringResource(R.string.empty_servers_text), color = TulporColors.Text2, fontSize = 14.sp,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center)

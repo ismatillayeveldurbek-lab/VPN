@@ -33,7 +33,7 @@
     <string name="ms">%d ms</string>
     <string name="unreachable">Javob yo\'q</string>
     <string name="add_server">Server qo\'shish</string>
-    <string name="add_server_hint">vless:// havolasini joylang (bir nechta bo\'lishi mumkin)</string>
+    <string name="add_server_hint">vless:// havola(lar)</string>
     <string name="paste_clipboard">Buferdan qo\'yish</string>
     <string name="subscription_url">Obuna havolasi (ixtiyoriy)</string>
     <string name="add">Qo\'shish</string>
@@ -73,8 +73,8 @@
     <string name="split_tunneling">Ilovalarni tanlash</string>
     <string name="split_tunneling_sub">Qaysi ilovalar VPN orqali</string>
     <string name="split_all">Barchasi</string>
-    <string name="split_only">Faqat tanlanganlar</string>
-    <string name="split_except">Tanlanganlardan tashqari</string>
+    <string name="split_only">Tanlanganlar</string>
+    <string name="split_except">Istisnolar</string>
     <string name="split_n_apps">%d ta ilova</string>
     <string name="protocol">Protokol</string>
     <string name="language">Til</string>
@@ -87,4 +87,7 @@
     <string name="subscription_refresh">Obunani yangilash</string>
     <string name="connect_failed_hint">Server ishlayotganini va havolani tekshiring</string>
     <string name="notification_permission">Bildirishnomalarga ruxsat bering, shunda VPN holati ko\'rinib turadi</string>
+    <string name="split_all_hint">Barcha ilovalar VPN orqali ishlaydi</string>
+    <string name="split_only_hint">Faqat belgilangan ilovalar VPN orqali ishlaydi</string>
+    <string name="split_except_hint">Belgilangan ilovalar VPN\'siz, qolganlari VPN orqali</string>
 </resources>

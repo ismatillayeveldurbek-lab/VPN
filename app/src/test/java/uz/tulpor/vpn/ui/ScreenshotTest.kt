@@ -24,11 +24,14 @@ import uz.tulpor.vpn.ui.components.GlassBackground
 import uz.tulpor.vpn.ui.components.GlassNavBar
 import uz.tulpor.vpn.ui.components.Glow
 import uz.tulpor.vpn.ui.components.LocalHazeState
+import uz.tulpor.vpn.ui.components.LocalMotionEnabled
 import uz.tulpor.vpn.ui.components.NavItem
 import uz.tulpor.vpn.ui.home.HomeScreen
 import uz.tulpor.vpn.ui.premium.PremiumScreen
 import uz.tulpor.vpn.ui.servers.ServersScreen
+import uz.tulpor.vpn.ui.settings.AppsScreen
 import uz.tulpor.vpn.ui.settings.SettingsScreen
+import uz.tulpor.vpn.data.SplitMode
 import uz.tulpor.vpn.ui.theme.TulporTheme
 import uz.tulpor.vpn.vpn.Traffic
 import uz.tulpor.vpn.vpn.VpnStatus
@@ -61,7 +64,7 @@ class ScreenshotTest {
     private fun Frame(glow: Glow, tab: String?, content: @Composable () -> Unit) {
         val haze = rememberHazeState()
         TulporTheme {
-            CompositionLocalProvider(LocalHazeState provides haze) {
+            CompositionLocalProvider(LocalHazeState provides haze, LocalMotionEnabled provides false) {
                 GlassBackground(glow, haze) {
                     content()
                     if (tab != null) Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
@@ -108,5 +111,30 @@ class ScreenshotTest {
 
     @Test fun premium() = shot("premium") {
         Frame(Glow.Premium, null) { PremiumScreen {} }
+    }
+
+    // Narrow phone (360dp): catches labels that would wrap or overflow.
+    @Config(qualifiers = "uz-w360dp-h740dp-xxhdpi")
+    @Test fun small_apps() = shot("small_apps") {
+        Frame(Glow.Cool, null) {
+            AppsScreen(SplitMode.EXCEPT_SELECTED, emptySet(), {}, {}, {})
+        }
+    }
+
+    @Config(qualifiers = "uz-w360dp-h740dp-xxhdpi")
+    @Test fun small_home_connected() = shot("small_home_connected") {
+        Frame(Glow.Connected, Routes.HOME) {
+            HomeScreen(
+                VpnStatus.Connected(servers[0], SystemClock.elapsedRealtime() - 765_000),
+                Traffic(downBps = 13_075_000, upBps = 2_037_000), servers[0], 48, true, {}, {}, {},
+            )
+        }
+    }
+
+    @Config(qualifiers = "uz-w360dp-h740dp-xxhdpi")
+    @Test fun small_settings() = shot("small_settings") {
+        Frame(Glow.Cool, Routes.SETTINGS) {
+            SettingsScreen(AppSettings(splitMode = SplitMode.EXCEPT_SELECTED, splitApps = setOf("a", "b", "c")), {}, {}, {}, {})
+        }
     }
 }

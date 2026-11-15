@@ -1,7 +1,14 @@
 package uz.tulpor.vpn.ui
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -91,7 +98,11 @@ fun TulporRoot(
         GlassBackground(glow, hazeState) {
             NavHost(
                 nav, startDestination = Routes.HOME, modifier = Modifier.fillMaxSize(),
-                enterTransition = { fadeIn() }, exitTransition = { fadeOut() },
+                // Tabs: soft fade with a slight zoom. Pushed screens override this below.
+                enterTransition = { fadeIn(tween(280, delayMillis = 60)) + scaleIn(tween(320), initialScale = 0.97f) },
+                exitTransition = { fadeOut(tween(160)) + scaleOut(tween(220), targetScale = 1.02f) },
+                popEnterTransition = { fadeIn(tween(280, delayMillis = 60)) + scaleIn(tween(320), initialScale = 1.02f) },
+                popExitTransition = { fadeOut(tween(160)) + scaleOut(tween(220), targetScale = 0.97f) },
             ) {
                 composable(Routes.HOME) {
                     val shown = vm.displayServer()
@@ -118,17 +129,32 @@ fun TulporRoot(
                         onOpenApps = { nav.navigate(Routes.APPS) }, onRefreshSubscription = vm::refreshSubscription,
                     )
                 }
-                composable(Routes.APPS) {
+                composable(
+                    Routes.APPS,
+                    enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(350)) + fadeIn(tween(250)) },
+                    exitTransition = { fadeOut(tween(150)) },
+                    popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) + fadeOut(tween(250)) },
+                ) {
                     AppsScreen(
                         mode = settings.splitMode, selected = settings.splitApps,
                         onMode = vm::setSplitMode, onSelected = vm::setSplitApps, onBack = { nav.popBackStack() },
                     )
                 }
-                composable(Routes.PREMIUM) { PremiumScreen(onClose = { nav.popBackStack() }) }
+                composable(
+                    Routes.PREMIUM,
+                    enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up, tween(420)) + fadeIn(tween(300)) },
+                    popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Down, tween(350)) + fadeOut(tween(250)) },
+                ) { PremiumScreen(onClose = { nav.popBackStack() }) }
             }
 
             val tabs = listOf(Routes.HOME, Routes.SERVERS, Routes.SETTINGS)
-            if (route == null || route in tabs) {
+            // The bar slides away on pushed screens (apps, premium) instead of popping out.
+            AnimatedVisibility(
+                visible = route == null || route in tabs,
+                enter = slideInVertically(tween(350)) { it } + fadeIn(tween(250)),
+                exit = slideOutVertically(tween(300)) { it } + fadeOut(tween(200)),
+                modifier = Modifier.align(Alignment.BottomCenter),
+            ) { Box {
                 // Fade content out under the floating bar, like the mockup.
                 Box(
                     Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(120.dp)
@@ -144,7 +170,7 @@ fun TulporRoot(
                     onSelect = { nav.navigateTab(it) },
                     modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding(),
                 )
-            }
+            } }
             SnackbarHost(snackbar, Modifier.align(Alignment.TopCenter).navigationBarsPadding())
         }
     }

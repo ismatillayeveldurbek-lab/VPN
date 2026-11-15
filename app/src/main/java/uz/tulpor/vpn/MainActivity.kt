@@ -10,12 +10,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import uz.tulpor.vpn.ui.MainViewModel
 import uz.tulpor.vpn.ui.TulporRoot
+import uz.tulpor.vpn.ui.components.LocalMotionEnabled
 import uz.tulpor.vpn.ui.theme.TulporTheme
 import uz.tulpor.vpn.vpn.VpnStatus
 
@@ -35,13 +38,18 @@ class MainActivity : AppCompatActivity() {
         handleIntent(intent)
 
         setContent {
+            val motion = remember {
+                android.provider.Settings.Global.getFloat(contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f
+            }
             TulporTheme {
+                CompositionLocalProvider(LocalMotionEnabled provides motion) {
                 TulporRoot(
                     vm = vm,
                     pendingImport = pendingImport,
                     onImportConsumed = { pendingImport = null },
                     onToggleVpn = ::toggleVpn,
                 )
+                }
             }
         }
     }

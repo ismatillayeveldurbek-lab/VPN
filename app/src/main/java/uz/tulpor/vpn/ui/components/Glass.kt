@@ -1,5 +1,13 @@
 package uz.tulpor.vpn.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -7,6 +15,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,14 +31,62 @@ import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.hazeSource
 import uz.tulpor.vpn.ui.theme.TulporColors
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 val LocalHazeState = staticCompositionLocalOf<HazeState?> { null }
 
 enum class Glow { Default, Connected, Premium, Cool }
 
-/** Dark gradient with soft colored light blobs; glass surfaces blur this layer. */
+private data class Blob(val color: Color, val x: Float, val y: Float, val r: Float)
+
+private fun blobsFor(glow: Glow): List<Blob> = when (glow) {
+    Glow.Default -> listOf(
+        Blob(TulporColors.VioletGlow.copy(alpha = .75f), .10f, .08f, .75f),
+        Blob(TulporColors.Blue.copy(alpha = .60f), .98f, .32f, .60f),
+        Blob(TulporColors.Amber.copy(alpha = .30f), .85f, .92f, .70f),
+        Blob(TulporColors.Pink.copy(alpha = .25f), .02f, .70f, .55f),
+    )
+    Glow.Connected -> listOf(
+        Blob(TulporColors.VioletGlow.copy(alpha = .75f), .08f, .06f, .75f),
+        Blob(TulporColors.Amber.copy(alpha = .42f), .50f, .40f, .80f),
+        Blob(TulporColors.Green.copy(alpha = .18f), .98f, .85f, .60f),
+        Blob(TulporColors.Blue.copy(alpha = .45f), .00f, .75f, .60f),
+    )
+    Glow.Premium -> listOf(
+        Blob(TulporColors.VioletGlow.copy(alpha = .80f), .00f, .35f, .70f),
+        Blob(TulporColors.Amber.copy(alpha = .40f), .50f, .12f, .90f),
+        Blob(TulporColors.Pink.copy(alpha = .32f), 1.0f, .70f, .65f),
+        Blob(TulporColors.Blue.copy(alpha = .30f), .20f, .95f, .55f),
+    )
+    Glow.Cool -> listOf(
+        Blob(TulporColors.VioletGlow.copy(alpha = .70f), .95f, .05f, .70f),
+        Blob(TulporColors.Blue.copy(alpha = .55f), .00f, .55f, .65f),
+        Blob(TulporColors.Amber.copy(alpha = .25f), 1.0f, .95f, .65f),
+        Blob(TulporColors.Pink.copy(alpha = .16f), .30f, .25f, .45f),
+    )
+}
+
+/**
+ * Dark gradient with soft colored light blobs that slowly drift; glass surfaces blur
+ * this layer. Switching [glow] morphs the blobs' colors and positions smoothly.
+ */
 @Composable
 fun GlassBackground(glow: Glow, hazeState: HazeState, content: @Composable BoxScope.() -> Unit) {
+    val target = blobsFor(glow)
+    val drift = rememberInfiniteTransition(label = "drift")
+    val t by drift.animateFloat(
+        0f, (2 * PI).toFloat(), infiniteRepeatable(tween(24_000, easing = LinearEasing)), label = "t",
+    )
+    val animated = target.mapIndexed { i, b ->
+        val spec = tween<Float>(1100, easing = FastOutSlowInEasing)
+        Triple(
+            animateColorAsState(b.color, tween(1100), label = "bc$i"),
+            animateFloatAsState(b.x, spec, label = "bx$i") to animateFloatAsState(b.y, spec, label = "by$i"),
+            animateFloatAsState(b.r, spec, label = "br$i"),
+        )
+    }
     Box(Modifier.fillMaxSize()) {
         Box(
             Modifier
@@ -37,33 +94,16 @@ fun GlassBackground(glow: Glow, hazeState: HazeState, content: @Composable BoxSc
                 .hazeSource(hazeState)
                 .drawBehind {
                     drawRect(Brush.verticalGradient(listOf(TulporColors.BgTop, TulporColors.Bg)))
-                    fun blob(c: Color, x: Float, y: Float, r: Float) = drawCircle(
-                        Brush.radialGradient(listOf(c, Color.Transparent), Offset(size.width * x, size.height * y), size.width * r),
-                        radius = size.width * r, center = Offset(size.width * x, size.height * y),
-                    )
-                    when (glow) {
-                        Glow.Default -> {
-                            blob(TulporColors.VioletGlow.copy(alpha = .75f), .1f, .08f, .75f)
-                            blob(TulporColors.Blue.copy(alpha = .6f), .98f, .32f, .6f)
-                            blob(TulporColors.Amber.copy(alpha = .30f), .85f, .92f, .7f)
-                            blob(TulporColors.Pink.copy(alpha = .25f), .02f, .7f, .55f)
-                        }
-                        Glow.Connected -> {
-                            blob(TulporColors.Amber.copy(alpha = .40f), .5f, .40f, .8f)
-                            blob(TulporColors.VioletGlow.copy(alpha = .75f), .08f, .06f, .75f)
-                            blob(TulporColors.Green.copy(alpha = .18f), .98f, .85f, .6f)
-                            blob(TulporColors.Blue.copy(alpha = .45f), .0f, .75f, .6f)
-                        }
-                        Glow.Premium -> {
-                            blob(TulporColors.Amber.copy(alpha = .40f), .5f, .12f, .9f)
-                            blob(TulporColors.VioletGlow.copy(alpha = .8f), .0f, .35f, .7f)
-                            blob(TulporColors.Pink.copy(alpha = .32f), 1f, .7f, .65f)
-                        }
-                        Glow.Cool -> {
-                            blob(TulporColors.VioletGlow.copy(alpha = .7f), .95f, .05f, .7f)
-                            blob(TulporColors.Blue.copy(alpha = .55f), .0f, .55f, .65f)
-                            blob(TulporColors.Amber.copy(alpha = .25f), 1f, .95f, .65f)
-                        }
+                    animated.forEachIndexed { i, (c, xy, r) ->
+                        // Each blob orbits slowly around its anchor, out of phase with the others.
+                        val phase = t + i * 1.7f
+                        val cx = size.width * (xy.first.value + 0.06f * sin(phase))
+                        val cy = size.height * (xy.second.value + 0.035f * cos(phase * 0.8f))
+                        val radius = size.width * r.value * (1f + 0.06f * sin(phase * 1.3f))
+                        drawCircle(
+                            Brush.radialGradient(listOf(c.value, Color.Transparent), Offset(cx, cy), radius),
+                            radius = radius, center = Offset(cx, cy),
+                        )
                     }
                 }
         )

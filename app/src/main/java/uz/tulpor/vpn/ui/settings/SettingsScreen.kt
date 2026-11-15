@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -51,6 +52,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
@@ -58,6 +60,8 @@ import uz.tulpor.vpn.BuildConfig
 import uz.tulpor.vpn.R
 import uz.tulpor.vpn.data.AppSettings
 import uz.tulpor.vpn.data.SplitMode
+import uz.tulpor.vpn.ui.components.appear
+import uz.tulpor.vpn.ui.components.bouncyClickable
 import uz.tulpor.vpn.ui.components.glass
 import uz.tulpor.vpn.ui.theme.TulporColors
 import uz.tulpor.tulpor.Tulpor
@@ -74,23 +78,24 @@ fun SettingsScreen(
     var killDialog by remember { mutableStateOf(false) }
     var langDialog by remember { mutableStateOf(false) }
 
+    var n = 0
     LazyColumn(
         Modifier.fillMaxSize().statusBarsPadding(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 110.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(bottom = 6.dp)) }
-        item { Section(R.string.section_connection) }
+        item { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.titleLarge, maxLines = 1, modifier = Modifier.padding(bottom = 6.dp)) }
+        item { Section(R.string.section_connection, n++) }
         item {
-            SettingRow(Icons.Rounded.Shield, stringResource(R.string.kill_switch), stringResource(R.string.kill_switch_sub),
+            SettingRow(n++, Icons.Rounded.Shield, stringResource(R.string.kill_switch), stringResource(R.string.kill_switch_sub),
                 onClick = { killDialog = true }) { Chevron() }
         }
         item {
-            SettingRow(Icons.Rounded.Bolt, stringResource(R.string.auto_connect), stringResource(R.string.auto_connect_sub),
+            SettingRow(n++, Icons.Rounded.Bolt, stringResource(R.string.auto_connect), stringResource(R.string.auto_connect_sub),
                 onClick = { onAutoConnect(!settings.autoConnect) }) { GoldSwitch(settings.autoConnect, onAutoConnect) }
         }
         item {
-            SettingRow(Icons.Rounded.SwapHoriz, stringResource(R.string.bypass_uz), stringResource(R.string.bypass_uz_sub),
+            SettingRow(n++, Icons.Rounded.SwapHoriz, stringResource(R.string.bypass_uz), stringResource(R.string.bypass_uz_sub),
                 onClick = { onBypassUz(!settings.bypassUz) }) { GoldSwitch(settings.bypassUz, onBypassUz) }
         }
         item {
@@ -98,17 +103,17 @@ fun SettingsScreen(
                 SplitMode.ALL -> stringResource(R.string.split_all)
                 else -> stringResource(R.string.split_n_apps, settings.splitApps.size)
             }
-            SettingRow(Icons.Rounded.Apps, stringResource(R.string.split_tunneling), stringResource(R.string.split_tunneling_sub),
+            SettingRow(n++, Icons.Rounded.Apps, stringResource(R.string.split_tunneling), stringResource(R.string.split_tunneling_sub),
                 onClick = onOpenApps) { Value(value) }
         }
         item {
-            SettingRow(Icons.Rounded.Sync, stringResource(R.string.protocol), null, onClick = null) { Value("VLESS · Reality") }
+            SettingRow(n++, Icons.Rounded.Sync, stringResource(R.string.protocol), null, onClick = null) { Value("VLESS · Reality") }
         }
         if (settings.subscriptionUrl.isNotBlank()) item {
-            SettingRow(Icons.Rounded.Sync, stringResource(R.string.subscription_refresh), settings.subscriptionUrl,
+            SettingRow(n++, Icons.Rounded.Sync, stringResource(R.string.subscription_refresh), settings.subscriptionUrl,
                 onClick = onRefreshSubscription) { Chevron() }
         }
-        item { Section(R.string.section_app) }
+        item { Section(R.string.section_app, n++) }
         item {
             val tag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
             val current = when {
@@ -117,10 +122,10 @@ fun SettingsScreen(
                 tag.startsWith("uz") -> "O'zbekcha"
                 else -> stringResource(R.string.language_system)
             }
-            SettingRow(Icons.Rounded.Language, stringResource(R.string.language), null, onClick = { langDialog = true }) { Value(current) }
+            SettingRow(n++, Icons.Rounded.Language, stringResource(R.string.language), null, onClick = { langDialog = true }) { Value(current) }
         }
         item {
-            SettingRow(Icons.Rounded.Info, stringResource(R.string.about),
+            SettingRow(n++, Icons.Rounded.Info, stringResource(R.string.about),
                 stringResource(R.string.version, BuildConfig.VERSION_NAME, remember { runCatching { Tulpor.version() }.getOrDefault("?") }),
                 onClick = null) {}
         }
@@ -176,15 +181,16 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun Section(res: Int) {
+private fun Section(res: Int, index: Int) {
     Text(
-        stringResource(res).uppercase(), style = MaterialTheme.typography.labelMedium,
-        color = TulporColors.Text3, modifier = Modifier.padding(start = 4.dp, top = 10.dp, bottom = 2.dp),
+        stringResource(res).uppercase(), style = MaterialTheme.typography.labelMedium, maxLines = 1,
+        color = TulporColors.Text3, modifier = Modifier.appear(index).padding(start = 4.dp, top = 10.dp, bottom = 2.dp),
     )
 }
 
 @Composable
 private fun SettingRow(
+    index: Int,
     icon: ImageVector,
     title: String,
     subtitle: String?,
@@ -193,9 +199,10 @@ private fun SettingRow(
 ) {
     Row(
         Modifier
+            .appear(index)
             .fillMaxWidth()
+            .then(if (onClick != null) Modifier.bouncyClickable(pressedScale = 0.98f, onClick = onClick) else Modifier)
             .glass(RoundedCornerShape(16.dp))
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -209,8 +216,10 @@ private fun SettingRow(
         ) { Icon(icon, null, tint = TulporColors.Gold, modifier = Modifier.size(19.dp)) }
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-            if (!subtitle.isNullOrBlank()) Text(subtitle, color = TulporColors.Text3, fontSize = 12.sp, maxLines = 2)
+            Text(title, fontWeight = FontWeight.SemiBold, fontSize = 15.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (!subtitle.isNullOrBlank()) {
+                Text(subtitle, color = TulporColors.Text3, fontSize = 12.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
         }
         Spacer(Modifier.width(8.dp))
         trailing()
@@ -221,7 +230,10 @@ private fun SettingRow(
 private fun Chevron() = Icon(Icons.Rounded.ChevronRight, null, tint = TulporColors.Text3)
 
 @Composable
-private fun Value(text: String) = Text(text, color = TulporColors.Text2, fontSize = 13.sp)
+private fun Value(text: String) = Text(
+    text, color = TulporColors.Text2, fontSize = 13.sp, maxLines = 1, overflow = TextOverflow.Ellipsis,
+    modifier = Modifier.widthIn(max = 130.dp),
+)
 
 @Composable
 private fun GoldSwitch(checked: Boolean, onChange: (Boolean) -> Unit) = Switch(

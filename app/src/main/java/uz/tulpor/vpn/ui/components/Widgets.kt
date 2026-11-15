@@ -19,6 +19,7 @@ import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -208,12 +209,16 @@ fun PingBars(ms: Long?, modifier: Modifier = Modifier) {
     }
     Row(modifier.height(14.dp), horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.Bottom) {
         listOf(5.dp, 9.dp, 14.dp).forEachIndexed { i, hgt ->
+            val c by androidx.compose.animation.animateColorAsState(
+                if (i < level) color else Color.White.copy(alpha = .2f),
+                androidx.compose.animation.core.tween(400, delayMillis = i * 70), label = "bar$i",
+            )
             Box(
                 Modifier
                     .width(4.dp)
                     .height(hgt)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(if (i < level) color else Color.White.copy(alpha = .2f))
+                    .background(c)
             )
         }
     }

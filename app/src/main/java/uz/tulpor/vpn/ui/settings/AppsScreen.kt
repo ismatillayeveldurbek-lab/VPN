@@ -1,6 +1,13 @@
 package uz.tulpor.vpn.ui.settings
 
 import android.content.Intent
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.Drawable
@@ -20,7 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -50,12 +57,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import uz.tulpor.vpn.R
 import uz.tulpor.vpn.data.SplitMode
+import uz.tulpor.vpn.ui.components.SegmentedControl
+import uz.tulpor.vpn.ui.components.appear
+import uz.tulpor.vpn.ui.components.bouncyClickable
 import uz.tulpor.vpn.ui.components.glass
 import uz.tulpor.vpn.ui.theme.TulporColors
 
@@ -90,14 +101,36 @@ fun AppsScreen(
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Row(Modifier.padding(start = 8.dp, end = 20.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, null) }
-            Text(stringResource(R.string.apps_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.apps_title), style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        Row(Modifier.padding(horizontal = 20.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ModeChip(stringResource(R.string.split_all), mode == SplitMode.ALL) { onMode(SplitMode.ALL) }
-            ModeChip(stringResource(R.string.split_only), mode == SplitMode.ONLY_SELECTED) { onMode(SplitMode.ONLY_SELECTED) }
-            ModeChip(stringResource(R.string.split_except), mode == SplitMode.EXCEPT_SELECTED) { onMode(SplitMode.EXCEPT_SELECTED) }
+        SegmentedControl(
+            options = listOf(
+                stringResource(R.string.split_all),
+                stringResource(R.string.split_only),
+                stringResource(R.string.split_except),
+            ),
+            selected = mode.ordinal,
+            onSelect = { onMode(SplitMode.entries[it]) },
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 10.dp),
+        )
+        AnimatedContent(mode, transitionSpec = { fadeIn(tween(250)) togetherWith fadeOut(tween(150)) }, label = "hint") { m ->
+            Text(
+                stringResource(
+                    when (m) {
+                        SplitMode.ALL -> R.string.split_all_hint
+                        SplitMode.ONLY_SELECTED -> R.string.split_only_hint
+                        SplitMode.EXCEPT_SELECTED -> R.string.split_except_hint
+                    }
+                ),
+                color = TulporColors.Text3, fontSize = 13.sp, maxLines = 2,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 10.dp),
+            )
         }
-        if (mode != SplitMode.ALL) {
+        AnimatedVisibility(
+            visible = mode != SplitMode.ALL,
+            enter = fadeIn(tween(300)) + slideInVertically(tween(350)) { it / 8 },
+            exit = fadeOut(tween(200)),
+        ) { Column {
             Row(
                 Modifier.padding(horizontal = 20.dp).fillMaxWidth().glass(RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -121,11 +154,12 @@ fun AppsScreen(
                     contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 40.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    items(shown, key = { it.pkg }) { app ->
+                    itemsIndexed(shown, key = { _, it -> it.pkg }) { i, app ->
                         val checked = app.pkg in selected
                         Row(
-                            Modifier.fillMaxWidth().glass(RoundedCornerShape(14.dp), selected = checked)
-                                .clickable { onSelected(if (checked) selected - app.pkg else selected + app.pkg) }
+                            Modifier.animateItem().appear(i).fillMaxWidth()
+                                .bouncyClickable(pressedScale = 0.98f) { onSelected(if (checked) selected - app.pkg else selected + app.pkg) }
+                                .glass(RoundedCornerShape(14.dp), selected = checked)
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -141,20 +175,7 @@ fun AppsScreen(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ModeChip(text: String, selected: Boolean, onClick: () -> Unit) {
-    Box(
-        Modifier
-            .then(if (selected) Modifier.clip(CircleShape).background(TulporColors.Gold) else Modifier.glass(CircleShape))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Text(text, fontSize = 12.sp, color = if (selected) TulporColors.OnGold else TulporColors.Text2,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
+        } }
     }
 }
 
