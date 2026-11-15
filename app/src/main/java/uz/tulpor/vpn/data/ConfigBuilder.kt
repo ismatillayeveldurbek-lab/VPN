@@ -26,11 +26,17 @@ object ConfigBuilder {
         /** Send *.uz sites directly (they are not blocked and are faster without a tunnel). */
         val bypassUz: Boolean = true,
         val logLevel: String = "warning",
+        /** File Xray appends warnings/errors to (see ConnectionLog); null = logcat only. */
+        val errorLogPath: String? = null,
     )
 
     /** Full config for the VPN: TUN inbound -> VLESS proxy, with DNS and bypass rules. */
     fun vpnConfig(server: Server, options: Options = Options()): String = buildJsonObject {
-        putJsonObject("log") { put("loglevel", options.logLevel) }
+        putJsonObject("log") {
+            put("loglevel", options.logLevel)
+            put("access", "none")
+            options.errorLogPath?.let { put("error", it) }
+        }
         putJsonObject("dns") {
             put("servers", JsonArray(DNS_SERVERS.map(::JsonPrimitive)))
             put("queryStrategy", "UseIPv4")

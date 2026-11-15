@@ -89,4 +89,12 @@
     <string name="split_all_hint">All apps use the VPN</string>
     <string name="split_only_hint">Only checked apps use the VPN</string>
     <string name="split_except_hint">Checked apps bypass the VPN, others use it</string>
+    <string name="error_server_unreachable">%s is not responding. Check that the server is running and the link is correct.</string>
+    <string name="error_none_reachable">No server responded. Check your internet and servers.</string>
+    <string name="log_title">Connection log</string>
+    <string name="log_sub">View and share when something goes wrong</string>
+    <string name="log_empty">The log is empty. Entries appear after you connect.</string>
+    <string name="share">Share</string>
+    <string name="refresh">Refresh</string>
+    <string name="clear">Clear</string>
 </resources>

@@ -75,6 +75,12 @@ keyPassword=...
 cd core && go test ./...
 ```
 
+To'liq VPN yo'li sinovi (Linux, root kerak). "Telefon" tarmoq muhiti → TUN → ilova yaratgan Xray sozlamasi → VLESS + Reality → `install.sh` yaratgan server → sayt, DNS ham tunnel orqali:
+
+```bash
+XRAY=/path/to/xray ./core/e2e/tun_e2e.sh
+```
+
 `core` testlari ichida haqiqiy VLESS + Reality + Vision server va mijozni ishga tushirib, tunnel orqali so'rov yuboradigan end-to-end test bor. Ilova yaratgan Xray konfiguratsiyasi ham Xray'ga yuklab tekshiriladi.
 
 Ekran rasmlarini yangilash:

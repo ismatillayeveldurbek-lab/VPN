@@ -89,4 +89,12 @@
     <string name="split_all_hint">Все приложения работают через VPN</string>
     <string name="split_only_hint">Через VPN работают только отмеченные</string>
     <string name="split_except_hint">Отмеченные — без VPN, остальные — через VPN</string>
+    <string name="error_server_unreachable">%s не отвечает. Проверьте, что сервер работает и ссылка верна.</string>
+    <string name="error_none_reachable">Ни один сервер не ответил. Проверьте интернет и серверы.</string>
+    <string name="log_title">Журнал подключения</string>
+    <string name="log_sub">Посмотреть и отправить при проблемах</string>
+    <string name="log_empty">Журнал пуст. Записи появятся после подключения.</string>
+    <string name="share">Поделиться</string>
+    <string name="refresh">Обновить</string>
+    <string name="clear">Очистить</string>
 </resources>

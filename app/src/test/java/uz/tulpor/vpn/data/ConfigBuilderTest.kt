@@ -17,7 +17,9 @@ class ConfigBuilderTest {
     )!!
 
     @Test fun vpnConfigHasTunInboundAndRealityOutbound() {
-        val json = ConfigBuilder.vpnConfig(server)
+        val logFile = File("build/xray-test.log").absoluteFile
+        val json = ConfigBuilder.vpnConfig(server, ConfigBuilder.Options(errorLogPath = logFile.path))
+        assertTrue(json.contains("\"error\":\"${logFile.path}\""))
         // Exported so core/ Go tests can load the exact config into Xray (see core_test.go).
         File("build/generated-vpn-config.json").apply { parentFile?.mkdirs() }.writeText(json)
 

@@ -69,13 +69,20 @@ class TulporVpnService : VpnService() {
         try {
             val app = application as TulporApp
             val settings = app.settings.current()
+            ConnectionLog.start(this, "Ulanish boshlandi · Tulpor ${uz.tulpor.vpn.BuildConfig.VERSION_NAME} · Xray ${runCatching { Tulpor.version() }.getOrDefault("?")}")
             val server = pickServer(app.servers.all(), settings)
-                ?: throw IllegalStateException(getString(R.string.error_no_server))
+            ConnectionLog.add(this, "Server: ${server.name} (${server.address}:${server.port}, ${server.network}/${server.security})")
 
             stopEngine()
             val pfd = buildTun(settings) ?: throw IllegalStateException(getString(R.string.error_vpn_permission))
             tun = pfd
-            Tulpor.start(ConfigBuilder.vpnConfig(server, ConfigBuilder.Options(bypassUz = settings.bypassUz)), pfd.fd.toLong())
+            ConnectionLog.add(this, "VPN interfeysi tayyor, split=${settings.splitMode}, .uz to'g'ridan=${settings.bypassUz}")
+            val options = ConfigBuilder.Options(
+                bypassUz = settings.bypassUz,
+                errorLogPath = ConnectionLog.file(this).absolutePath,
+            )
+            Tulpor.start(ConfigBuilder.vpnConfig(server, options), pfd.fd.toLong())
+            ConnectionLog.add(this, "Ulandi ✓")
 
             currentServer = server
             VpnState.set(VpnStatus.Connected(server, SystemClock.elapsedRealtime()))
@@ -83,6 +90,7 @@ class TulporVpnService : VpnService() {
             startStats(server)
         } catch (e: Throwable) {
             Log.e(TAG, "connect failed", e)
+            ConnectionLog.add(this, "XATO: ${e.message ?: e.javaClass.simpleName}")
             stopEngine()
             VpnState.set(VpnStatus.Failed(e.message ?: e.javaClass.simpleName))
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -91,12 +99,28 @@ class TulporVpnService : VpnService() {
         refreshTile()
     }
 
-    private suspend fun pickServer(all: List<Server>, settings: AppSettings): Server? {
+    /**
+     * Chooses the server and makes sure it actually answers before we take over the
+     * phone's traffic, so the user gets a clear error instead of "Connected" with no internet.
+     */
+    private suspend fun pickServer(all: List<Server>, settings: AppSettings): Server {
         val usable = all.filter { !it.premium || settings.isPremium }
-        if (settings.selectedServerId != AppSettings.AUTO_SERVER) {
-            usable.firstOrNull { it.id == settings.selectedServerId }?.let { return it }
+        if (usable.isEmpty()) throw IllegalStateException(getString(R.string.error_no_server))
+
+        val chosen = usable.firstOrNull { it.id == settings.selectedServerId }
+        if (chosen != null) {
+            val cached = Pinger.results.value[chosen.id]
+            val delay = if (cached != null && cached >= 0) cached else Pinger.measure(chosen)
+            ConnectionLog.add(this, "Tekshiruv ${chosen.name}: ${if (delay >= 0) "$delay ms" else "javob yo'q"}")
+            if (delay < 0) throw IllegalStateException(getString(R.string.error_server_unreachable, chosen.name))
+            return chosen
         }
-        return Pinger.fastest(usable) ?: usable.firstOrNull()
+        ConnectionLog.add(this, "Eng tez server qidirilmoqda (${usable.size} ta)…")
+        val fastest = Pinger.fastest(usable)
+        Pinger.results.value.forEach { (id, d) ->
+            usable.firstOrNull { it.id == id }?.let { ConnectionLog.add(this, "  ${it.name}: ${if (d >= 0) "$d ms" else "javob yo'q"}") }
+        }
+        return fastest ?: throw IllegalStateException(getString(R.string.error_none_reachable))
     }
 
     private fun buildTun(settings: AppSettings): ParcelFileDescriptor? {
@@ -160,6 +184,7 @@ class TulporVpnService : VpnService() {
 
     private suspend fun disconnect(stopService: Boolean) = lock.withLock {
         VpnState.set(VpnStatus.Disconnecting)
+        if (currentServer != null) ConnectionLog.add(this, "Uzildi")
         stopEngine()
         currentServer = null
         VpnState.set(VpnStatus.Disconnected)
@@ -179,6 +204,7 @@ class TulporVpnService : VpnService() {
     }
 
     override fun onRevoke() {
+        ConnectionLog.add(this, "VPN tizim tomonidan to'xtatildi (boshqa VPN yoqildi yoki ruxsat olib tashlandi)")
         // Another VPN took over or the user revoked permission in system settings.
         scope.launch { disconnect(stopService = true) }
     }

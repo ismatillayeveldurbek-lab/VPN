@@ -62,6 +62,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val PREMIUM = "premium"
     const val APPS = "apps"
+    const val LOG = "log"
 }
 
 @Composable
@@ -127,6 +128,7 @@ fun TulporRoot(
                     SettingsScreen(
                         settings = settings, onAutoConnect = vm::setAutoConnect, onBypassUz = vm::setBypassUz,
                         onOpenApps = { nav.navigate(Routes.APPS) }, onRefreshSubscription = vm::refreshSubscription,
+                        onOpenLog = { nav.navigate(Routes.LOG) },
                     )
                 }
                 composable(
@@ -140,6 +142,12 @@ fun TulporRoot(
                         onMode = vm::setSplitMode, onSelected = vm::setSplitApps, onBack = { nav.popBackStack() },
                     )
                 }
+                composable(
+                    Routes.LOG,
+                    enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start, tween(350)) + fadeIn(tween(250)) },
+                    exitTransition = { fadeOut(tween(150)) },
+                    popExitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End, tween(300)) + fadeOut(tween(250)) },
+                ) { uz.tulpor.vpn.ui.settings.LogScreen(onBack = { nav.popBackStack() }) }
                 composable(
                     Routes.PREMIUM,
                     enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Up, tween(420)) + fadeIn(tween(300)) },

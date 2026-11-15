@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Apps
 import androidx.compose.material.icons.rounded.Bolt
+import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Language
@@ -73,6 +74,7 @@ fun SettingsScreen(
     onBypassUz: (Boolean) -> Unit,
     onOpenApps: () -> Unit,
     onRefreshSubscription: () -> Unit,
+    onOpenLog: () -> Unit = {},
 ) {
     val ctx = LocalContext.current
     var killDialog by remember { mutableStateOf(false) }
@@ -114,6 +116,10 @@ fun SettingsScreen(
                 onClick = onRefreshSubscription) { Chevron() }
         }
         item { Section(R.string.section_app, n++) }
+        item {
+            SettingRow(n++, Icons.Rounded.Description, stringResource(R.string.log_title), stringResource(R.string.log_sub),
+                onClick = onOpenLog) { Chevron() }
+        }
         item {
             val tag = AppCompatDelegate.getApplicationLocales().toLanguageTags()
             val current = when {

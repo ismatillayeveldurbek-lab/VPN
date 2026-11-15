@@ -90,4 +90,12 @@
     <string name="split_all_hint">Barcha ilovalar VPN orqali ishlaydi</string>
     <string name="split_only_hint">Faqat belgilangan ilovalar VPN orqali ishlaydi</string>
     <string name="split_except_hint">Belgilangan ilovalar VPN\'siz, qolganlari VPN orqali</string>
+    <string name="error_server_unreachable">%s javob bermadi. Server ishlayotganini va havolani tekshiring.</string>
+    <string name="error_none_reachable">Hech bir server javob bermadi. Internet va serverlarni tekshiring.</string>
+    <string name="log_title">Ulanish jurnali</string>
+    <string name="log_sub">Muammo bo\'lsa ko\'rish va yuborish</string>
+    <string name="log_empty">Jurnal bo\'sh. Ulanishdan so\'ng bu yerda ma\'lumot paydo bo\'ladi.</string>
+    <string name="share">Ulashish</string>
+    <string name="refresh">Yangilash</string>
+    <string name="clear">Tozalash</string>
 </resources>
