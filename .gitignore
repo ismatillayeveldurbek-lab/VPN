@@ -1,0 +1,14 @@
+.gradle/
+build/
+local.properties
+.idea/
+*.iml
+.kotlin/
+captures/
+keystore.properties
+*.jks
+*.keystore
+app/libs/*.aar
+app/libs/*-sources.jar
+signing/
+release/
