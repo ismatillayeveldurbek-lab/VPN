@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tulpor brand palette -->
+    <color name="tulpor_indigo_900">#FF1E1A5E</color>
+    <color name="tulpor_indigo">#FF2B1F8C</color>
+    <color name="tulpor_violet">#FF741BEB</color>
+    <color name="tulpor_gold_light">#FFFDE68A</color>
+    <color name="tulpor_gold">#FFFBBF24</color>
+    <color name="tulpor_amber">#FFF59E0B</color>
+    <color name="tulpor_connected">#FF22C55E</color>
+    <color name="tulpor_error">#FFEF4444</color>
+    <color name="splash_background">#FF2B1F8C</color>
+    <color name="notification_accent">#FFF59E0B</color>
+</resources>
