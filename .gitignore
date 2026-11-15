@@ -11,3 +11,4 @@ keystore.properties
 app/libs/*.aar
 app/libs/*-sources.jar
 signing/
+release/
