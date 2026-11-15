@@ -201,7 +201,7 @@ private fun SettingRow(
         Modifier
             .appear(index)
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.bouncyClickable(pressedScale = 0.98f, onClick = onClick) else Modifier)
+            .then(if (onClick != null) Modifier.bouncyClickable(RoundedCornerShape(16.dp), pressedScale = 0.98f, onClick = onClick) else Modifier)
             .glass(RoundedCornerShape(16.dp))
             .padding(horizontal = 14.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,

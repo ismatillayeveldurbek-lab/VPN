@@ -135,7 +135,7 @@ fun PremiumScreen(onClose: () -> Unit) {
 private fun PlanRow(title: String, sub: String, price: String, selected: Boolean, badge: String?, onClick: () -> Unit) {
     Box {
         Row(
-            Modifier.fillMaxWidth().bouncyClickable(onClick = onClick).glass(RoundedCornerShape(16.dp), selected = selected).padding(14.dp),
+            Modifier.fillMaxWidth().bouncyClickable(RoundedCornerShape(16.dp), onClick = onClick).glass(RoundedCornerShape(16.dp), selected = selected).padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             RadioButton(selected, onClick = null, colors = RadioButtonDefaults.colors(selectedColor = TulporColors.Gold))

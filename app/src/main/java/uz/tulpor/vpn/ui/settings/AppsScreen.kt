@@ -158,7 +158,7 @@ fun AppsScreen(
                         val checked = app.pkg in selected
                         Row(
                             Modifier.animateItem().appear(i).fillMaxWidth()
-                                .bouncyClickable(pressedScale = 0.98f) { onSelected(if (checked) selected - app.pkg else selected + app.pkg) }
+                                .bouncyClickable(RoundedCornerShape(14.dp), pressedScale = 0.98f) { onSelected(if (checked) selected - app.pkg else selected + app.pkg) }
                                 .glass(RoundedCornerShape(14.dp), selected = checked)
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,

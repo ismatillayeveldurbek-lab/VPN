@@ -37,6 +37,7 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -59,10 +60,13 @@ fun <T> tulporSpring() = spring<T>(dampingRatio = 0.72f, stiffness = Spring.Stif
 
 /**
  * Clickable that gently shrinks while pressed and springs back, with a soft white ripple.
- * Use instead of `clickable` on glass cards and buttons.
+ * Use instead of `clickable` on glass cards and buttons. [shape] must match the visible
+ * shape of the element: the ripple and press feedback are clipped to it, so a round
+ * button never shows a square highlight.
  */
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.bouncyClickable(
+    shape: Shape,
     enabled: Boolean = true,
     pressedScale: Float = 0.965f,
     role: Role? = Role.Button,
@@ -76,7 +80,11 @@ fun Modifier.bouncyClickable(
         spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium), label = "press",
     )
     this
-        .graphicsLayer { scaleX = scale; scaleY = scale }
+        .graphicsLayer {
+            scaleX = scale; scaleY = scale
+            this.shape = shape
+            clip = true
+        }
         .combinedClickable(
             interactionSource = source,
             indication = ripple(color = Color.White),
@@ -143,8 +151,7 @@ fun SegmentedControl(
                     Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .clip(CircleShape)
-                        .bouncyClickable(role = Role.Tab, pressedScale = 0.94f) { onSelect(i) }
+                        .bouncyClickable(CircleShape, role = Role.Tab, pressedScale = 0.94f) { onSelect(i) }
                         .padding(horizontal = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {

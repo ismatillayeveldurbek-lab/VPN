@@ -205,7 +205,7 @@ private fun TopBar(onOpenPremium: () -> Unit) {
         Spacer(Modifier.weight(1f))
         Row(
             Modifier
-                .bouncyClickable(onClick = onOpenPremium)
+                .bouncyClickable(CircleShape, onClick = onOpenPremium)
                 .clip(CircleShape)
                 .background(GoldBrush)
                 .drawWithContent {
@@ -405,7 +405,7 @@ private fun ServerCard(server: Server?, ping: Long?, hasServers: Boolean, onClic
     Box(
         Modifier
             .fillMaxWidth()
-            .bouncyClickable(onClick = onClick)
+            .bouncyClickable(RoundedCornerShape(20.dp), onClick = onClick)
             .glass(RoundedCornerShape(20.dp))
     ) {
         AnimatedContent(

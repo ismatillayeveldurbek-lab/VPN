@@ -173,7 +173,7 @@ fun ServersScreen(
                         .animateItem()
                         .appear(0)
                         .fillMaxWidth()
-                        .bouncyClickable { onSelect(AppSettings.AUTO_SERVER) }
+                        .bouncyClickable(RoundedCornerShape(16.dp)) { onSelect(AppSettings.AUTO_SERVER) }
                         .glass(RoundedCornerShape(16.dp), selected = selectedId == AppSettings.AUTO_SERVER)
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -254,7 +254,7 @@ private fun ServerRow(
     Row(
         modifier
             .fillMaxWidth()
-            .bouncyClickable(onLongClick = onLongClick, onClick = onClick)
+            .bouncyClickable(RoundedCornerShape(16.dp), onLongClick = onLongClick, onClick = onClick)
             .glass(RoundedCornerShape(16.dp), selected = selected)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -308,7 +308,7 @@ private fun RoundIcon(gold: Boolean = false, onClick: () -> Unit, content: @Comp
     Box(
         Modifier
             .size(42.dp)
-            .bouncyClickable(pressedScale = 0.9f, onClick = onClick)
+            .bouncyClickable(CircleShape, pressedScale = 0.9f, onClick = onClick)
             .then(if (gold) Modifier.clip(CircleShape).background(GoldBrush) else Modifier.glass(CircleShape)),
         contentAlignment = Alignment.Center,
     ) { content() }
